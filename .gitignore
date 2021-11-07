@@ -5,3 +5,7 @@ eval_*/
 models/
 saved_models/
 rewards*.txt
+model_weights_a
+tmp_eval_video.mp4
+tmp_eval_frames
+old_checkpoints

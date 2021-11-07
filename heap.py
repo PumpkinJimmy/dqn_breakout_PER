@@ -1,29 +1,41 @@
+import numpy as np
 class Heap:
     def __init__(self, cmp=lambda a,b: a>b):
+        # pairs of (entity, eid)
         self.data = [None]
+        self.hid_of = {}
         self.cmp = cmp
     
     def swap(self, a, b):
+        ea, eb = self.data[a][1], self.data[b][1]
+        self.hid_of[ea], self.hid_of[eb] = self.hid_of[eb], self.hid_of[ea]
         self.data[a], self.data[b] = self.data[b], self.data[a]
     
-    def push(self, x):
-        self.data.append(x)
+    def push(self, x, eid):
+        self.data.append((x, eid))
+        self.hid_of[eid] = len(self.data)-1
         self.pushup(len(self.data)-1)
     
     def pop(self):
         if len(self.data) <= 1:
             return False
         self.swap(1, -1)
+        del self.hid_of[self.data[-1][1]]
         self.data.pop()
         self.pushdown(1)
         return True
     
-    def replace(self, idx, x):
-        if idx < 1 or idx >= len(self.data):
-            return False
-        self.data[idx] = x
-        self.pushup(idx)
-        self.pushdown(idx)
+    def update(self, x, eid):
+        idx = self.hid_of.get(eid, None)
+        if idx is not None:
+            self.data[idx] = x
+            self.pushup(idx)
+            self.pushdown(idx)
+        else:
+            self.push(x, eid)
+    
+    def sort(self):
+        '''TODO: sort data and **maps** '''
     
     def pushup(self, idx):
         parent = idx//2
@@ -49,6 +61,9 @@ class Heap:
                 idx = max_idx
             else:
                 break
+    
+    def get_eid_by_rnk(self, rnk):
+        return [self.data[r][1] for r in rnk]
 
 if __name__ == '__main__':
     heap = Heap(lambda a,b: a<b)
@@ -58,7 +73,7 @@ if __name__ == '__main__':
         if line.startswith("1"):
             _, x = line.split(' ')
             x = int(x)
-            heap.push(x)
+            heap.update(x, x)
         elif line == "2":
             print(heap.data[1])
         else:
