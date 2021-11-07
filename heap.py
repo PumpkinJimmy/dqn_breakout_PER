@@ -1,25 +1,34 @@
 class Heap:
     def __init__(self, cmp=lambda a,b: a>b):
-        self.heap = [None]
+        self.data = [None]
         self.cmp = cmp
     
     def swap(self, a, b):
-        self.heap[a], self.heap[b] = self.heap[b], self.heap[a]
+        self.data[a], self.data[b] = self.data[b], self.data[a]
     
     def push(self, x):
-        self.heap.append(x)
-        self.pushup(len(self.heap)-1)
+        self.data.append(x)
+        self.pushup(len(self.data)-1)
     
     def pop(self):
-        if len(self.heap) <= 1: return
+        if len(self.data) <= 1:
+            return False
         self.swap(1, -1)
-        self.heap.pop()
+        self.data.pop()
         self.pushdown(1)
+        return True
+    
+    def replace(self, idx, x):
+        if idx < 1 or idx >= len(self.data):
+            return False
+        self.data[idx] = x
+        self.pushup(idx)
+        self.pushdown(idx)
     
     def pushup(self, idx):
         parent = idx//2
         while parent >= 1:
-            if self.cmp(self.heap[idx],self.heap[parent]):
+            if self.cmp(self.data[idx],self.data[parent]):
                 self.swap(idx, parent)
                 idx = parent
                 parent = idx // 2
@@ -27,8 +36,8 @@ class Heap:
                 break
     
     def pushdown(self, idx):
-        size = len(self.heap)
-        heap = self.heap
+        size = len(self.data)
+        heap = self.data
         while idx < size:
             max_idx = idx
             if idx * 2 < size and self.cmp(heap[idx*2],heap[max_idx]):
@@ -51,7 +60,7 @@ if __name__ == '__main__':
             x = int(x)
             heap.push(x)
         elif line == "2":
-            print(heap.heap[1])
+            print(heap.data[1])
         else:
             heap.pop()
 
