@@ -106,8 +106,9 @@ class PrioritizedReplayMemory:
         self.beta_decay = beta_decay
         self.beta = self.beta_start
         
-        self.heap = Heap(cmp=lambda a,b: a>b)
+        self.heap = Heap()
         self.pdf, self.ranges = self.build_dist()
+        self.pdf = torch.Tensor(self.pdf).to(self.__device)
 
     def push(
             self,
@@ -145,22 +146,28 @@ class PrioritizedReplayMemory:
         
         rnk = np.random.randint(self.ranges[:k]+1, self.ranges[1:]+1)
         
-        b_w = np.power(self.pdf[rnk-1] * self.__capacity, -self.beta)
-        b_w = torch.Tensor(b_w).reshape(-1, 1).to(self.__device).float()
+        b_w = torch.pow(self.pdf[rnk-1] * self.__capacity, -self.beta)
+        b_w = b_w.reshape(-1, 1).float()
         b_w /= b_w.max()
         
         indices = self.heap.get_eid_by_rnk(rnk)
-        b_state = self.__m_states[indices, :4].to(self.__device).float()
-        b_next = self.__m_states[indices, 1:].to(self.__device).float()
-        b_action = self.__m_actions[indices].to(self.__device)
-        b_reward = self.__m_rewards[indices].to(self.__device).float()
-        b_done = self.__m_dones[indices].to(self.__device).float()
+        b_state = self.__m_states[indices, :4].float()
+        b_next = self.__m_states[indices, 1:].float()
+        b_action = self.__m_actions[indices]
+        b_reward = self.__m_rewards[indices].float()
+        b_done = self.__m_dones[indices].float()
     
         return b_state, b_action, b_reward, b_next, b_done, b_w
     
 
     def __len__(self) -> int:
         return self.__size
+    
+    def full(self):
+        return self.__size == self.__capacity
+    
+    def sort(self):
+        self.heap.sort()
     
     def build_dist(self):
         """

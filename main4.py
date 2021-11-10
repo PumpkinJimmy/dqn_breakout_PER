@@ -28,6 +28,7 @@ EPS_DECAY = 1_000_000
 BATCH_SIZE = 32
 POLICY_UPDATE = 4
 TARGET_UPDATE = 10000
+SORT_UPDATE = 1_000_000
 WARM_STEPS = MEM_SIZE
 MAX_STEPS = 20_000_000
 EVALUATE_FREQ = 100_000
@@ -131,22 +132,26 @@ for step in progressive:
         # print(f"#{step}: 同步估值网络")
         
         agent.sync()
+    
+    if step % SORT_UPDATE == 0 and memory.full():
+        memory.sort()
+
 
     if step % EVALUATE_FREQ == 0:
         print(f"#{step}: 评估模型")
         
         agent.save(os.path.join(
             SAVE_PREFIX, f"model_{step//EVALUATE_FREQ:03d}"))
-        agent_eval = AgentP(
-            env.get_action_dim(),
-            device,
-            GAMMA,
-            new_seed(),
-            0, 0, 1,
-            restore=os.path.join(
-            SAVE_PREFIX, f"model_{step//EVALUATE_FREQ:03d}")
-        )
-        avg_reward, frames = env.evaluate(obs_queue, agent_eval, render=RENDER)
+        # agent_eval = AgentP(
+        #     env.get_action_dim(),
+        #     device,
+        #     GAMMA,
+        #     new_seed(),
+        #     0, 0, 1,
+        #     restore=os.path.join(
+        #     SAVE_PREFIX, f"model_{step//EVALUATE_FREQ:03d}")
+        # )
+        avg_reward, frames = env.evaluate(obs_queue, agent, render=RENDER)
         with open("rewards.txt", "a") as fp:
             fp.write(f"{step//EVALUATE_FREQ:3d} {step:8d} {avg_reward:.1f}\n")
         if RENDER:

@@ -16,7 +16,7 @@ from utils_memory import PrioritizedReplayMemory
 
 GAMMA = 0.99
 GLOBAL_SEED = 0
-MEM_SIZE = 50000
+MEM_SIZE = 500
 RENDER = False
 SAVE_PREFIX = "./models"
 STACK_SIZE = 4

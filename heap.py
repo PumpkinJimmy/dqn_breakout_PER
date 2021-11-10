@@ -1,10 +1,9 @@
 import numpy as np
 class Heap:
-    def __init__(self, cmp=lambda a,b: a>b):
+    def __init__(self):
         # pairs of (entity, eid)
-        self.data = [None]
+        self.data = [(1e9, None)]
         self.hid_of = {}
-        self.cmp = cmp
     
     def swap(self, a, b):
         ea, eb = self.data[a][1], self.data[b][1]
@@ -35,12 +34,15 @@ class Heap:
             self.push(x, eid)
     
     def sort(self):
-        '''TODO: sort data and **maps** '''
+        self.hid_of = {}
+        self.data.sort(reverse=True)
+        for idx, pair in enumerate(self.data[1:]):
+            self.hid_of[pair[1]] = idx+1
     
     def pushup(self, idx):
         parent = idx//2
         while parent >= 1:
-            if self.cmp(self.data[idx],self.data[parent]):
+            if self.data[idx] > self.data[parent]:
                 self.swap(idx, parent)
                 idx = parent
                 parent = idx // 2
@@ -52,9 +54,9 @@ class Heap:
         heap = self.data
         while idx < size:
             max_idx = idx
-            if idx * 2 < size and self.cmp(heap[idx*2],heap[max_idx]):
+            if idx * 2 < size and heap[idx*2] > heap[max_idx]:
                 max_idx = 2*idx
-            if idx * 2 + 1 < size and self.cmp(heap[idx*2+1],heap[max_idx]):
+            if idx * 2 + 1 < size and heap[idx*2+1] > heap[max_idx]:
                 max_idx = 2*idx+1
             if max_idx != idx:
                 self.swap(max_idx, idx)
@@ -65,17 +67,17 @@ class Heap:
     def get_eid_by_rnk(self, rnk):
         return [self.data[r][1] for r in rnk]
 
-if __name__ == '__main__':
-    heap = Heap(lambda a,b: a<b)
-    n = int(input())
-    for i in range(n):
-        line = input().strip()
-        if line.startswith("1"):
-            _, x = line.split(' ')
-            x = int(x)
-            heap.update(x, x)
-        elif line == "2":
-            print(heap.data[1])
-        else:
-            heap.pop()
+# if __name__ == '__main__':
+#     heap = Heap(lambda a,b: a<b)
+#     n = int(input())
+#     for i in range(n):
+#         line = input().strip()
+#         if line.startswith("1"):
+#             _, x = line.split(' ')
+#             x = int(x)
+#             heap.update(x, x)
+#         elif line == "2":
+#             print(heap.data[1])
+#         else:
+#             heap.pop()
 

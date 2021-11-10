@@ -44,15 +44,12 @@ agent = Agent(
     EPS_START,
     EPS_END,
     EPS_DECAY,
-    restore=r"E:\RF_ws\midterm\dqn-breakout\old_checkpoints\models_11142352\model_001"
+    restore=None
 )
 # model_path = 'model_weights_a'
 # device = torch.device("cuda")
 # env = MyEnv(device)
 # agent = Agent(env.get_action_dim(), device, 0.99, 3, 0, 0, 1, model_path)
-obs_queue = deque(maxlen=5)
-avg_reward, frames = env.evaluate(obs_queue, agent, render=True)
-print(f"Avg. Reward: {avg_reward:.1f}")
 
 memory = ReplayMemory(STACK_SIZE + 1, MEM_SIZE, device)
 
