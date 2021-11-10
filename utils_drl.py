@@ -154,15 +154,18 @@ class AgentP(object):
     def learn(self, memory: PrioritizedReplayMemory, batch_size: int) -> float:
         """learn trains the value network via TD-learning."""
         state_batch, action_batch, reward_batch, next_batch, done_batch, w_batch = \
-            memory.sample(batch_size)
+            memory.sample()
 
         values = self.__policy(state_batch.float()).gather(1, action_batch)
         values_next = self.__target(next_batch.float()).max(1).values.detach()
         expected = (self.__gamma * values_next.unsqueeze(1)) * \
             (1. - done_batch) + reward_batch
 
-        'FIXME: Apply the weight'
-        loss = F.smooth_l1_loss(values, expected)
+        # loss = F.smooth_l1_loss(values, expected)
+        l1loss = torch.abs(values - expected)
+        loss = torch.where(l1loss<1, 0.5*l1loss**2, l1loss-0.5)
+        loss = loss * w_batch
+        loss = loss.mean()
 
         self.__optimizer.zero_grad()
         loss.backward()

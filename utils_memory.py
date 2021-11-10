@@ -91,10 +91,14 @@ class PrioritizedReplayMemory:
         self.__pos = 0
 
         self.__m_states = torch.zeros(
-            (capacity, channels, 84, 84), dtype=torch.uint8)
-        self.__m_actions = torch.zeros((capacity, 1), dtype=torch.long)
-        self.__m_rewards = torch.zeros((capacity, 1), dtype=torch.int8)
-        self.__m_dones = torch.zeros((capacity, 1), dtype=torch.bool)
+            (capacity, channels, 84, 84), dtype=torch.uint8,
+            device=self.__device)
+        self.__m_actions = torch.zeros((capacity, 1), dtype=torch.long,
+        device=self.__device)
+        self.__m_rewards = torch.zeros((capacity, 1), dtype=torch.int8,
+        device=self.__device)
+        self.__m_dones = torch.zeros((capacity, 1), dtype=torch.bool,
+        device=self.__device)
 
         self.batch_size = batch_size
         self.alpha = alpha
@@ -120,8 +124,9 @@ class PrioritizedReplayMemory:
 
         self.heap.update(np.abs(delta), self.__pos)
 
+        self.__size = max(self.__size, self.__pos+1)
         self.__pos = (self.__pos + 1) % self.__capacity
-        self.__size = max(self.__size, self.__pos)
+        
 
         
 
@@ -138,10 +143,11 @@ class PrioritizedReplayMemory:
         self.beta = min(self.beta + (1.0 - self.beta_start)/self.beta_decay, 1.0)
         k = self.batch_size
         
-        rnk = np.random.randint(self.ranges[:k]+1, self.ranges[1:])
+        rnk = np.random.randint(self.ranges[:k]+1, self.ranges[1:]+1)
         
         b_w = np.power(self.pdf[rnk-1] * self.__capacity, -self.beta)
-        b_w = b_w.reshape(-1, 1).to(self.__device).float()
+        b_w = torch.Tensor(b_w).reshape(-1, 1).to(self.__device).float()
+        b_w /= b_w.max()
         
         indices = self.heap.get_eid_by_rnk(rnk)
         b_state = self.__m_states[indices, :4].to(self.__device).float()
@@ -152,11 +158,6 @@ class PrioritizedReplayMemory:
     
         return b_state, b_action, b_reward, b_next, b_done, b_w
     
-    # def calc_delta(self, state_batch, action_batch, next_batch, reward_batch, done_batch):
-    #     values = self.__policy(state_batch.float()).gather(1, action_batch)
-    #     values_next = self.__target(next_batch.float()).max(1).values.detach()
-    #     expected = (self.__gamma * values_next.unsqueeze(1)) * \
-    #         (1. - done_batch) + reward_batch
 
     def __len__(self) -> int:
         return self.__size
@@ -189,40 +190,6 @@ class PrioritizedReplayMemory:
         for s in range(1, k):
             while cur_r-1 < cdf.shape[0] and cdf[cur_r-1] < s*step:
                 cur_r += 1
-            ranges[s] = min(n, cur_r)
+            ranges[s] = min(n-1, cur_r)
         return pdf, ranges
-        # res = {}
-        # n_partitions = self.batch_size
-        # partition_num = 1
-        # # each part size
-        # partition_size = int(np.floor(self.__capacity / n_partitions))
-
-        # for n in range(partition_size, self.size + 1, partition_size):
-        #     distribution = {}
-        #     # P(i) = (rank i) ^ (-alpha) / sum ((rank i) ^ (-alpha))
-        #     pdf = np.pow(np.arnage(1, n+1), -self.alpha)
-            
-        #     pdf_sum = np.sum(pdf)
-        #     distribution['pdf'] = pdf / pdf_sum
-        #     # split to k segment, and than uniform sample in each k
-        #     # set k = batch_size, each segment has total probability is 1 / batch_size
-        #     # strata_ends keep each segment start pos and end pos
-        #     cdf = np.cumsum(distribution['pdf'])
-        #     strata_ends = np.zeros((self.batch_size+1, ))
-        #     strata_ends[self.batch_size] = self.__size
-        #     step = 1 / float(self.batch_size)
-        #     index = 1
-        #     for s in range(2, self.batch_size + 1):
-        #         while cdf[index] < step:
-        #             index += 1
-        #         strata_ends[s] = index
-        #         step += 1 / float(self.batch_size)
-
-        #     distribution['strata_ends'] = strata_ends
-
-        #     res[partition_num] = distribution
-
-        #     partition_num += 1
-
-        # return res
         

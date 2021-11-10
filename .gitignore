@@ -9,3 +9,7 @@ model_weights_a
 tmp_eval_video.mp4
 tmp_eval_frames
 old_checkpoints
+backup
+final_result
+参考实现中的Bug.md
+requirements.freezed

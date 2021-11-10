@@ -28,7 +28,7 @@ class Heap:
     def update(self, x, eid):
         idx = self.hid_of.get(eid, None)
         if idx is not None:
-            self.data[idx] = x
+            self.data[idx] = (x,eid)
             self.pushup(idx)
             self.pushdown(idx)
         else:
