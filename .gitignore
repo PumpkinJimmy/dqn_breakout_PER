@@ -12,4 +12,5 @@ old_checkpoints
 backup
 final_result
 参考实现中的Bug.md
+loss.txt
 requirements.freezed
